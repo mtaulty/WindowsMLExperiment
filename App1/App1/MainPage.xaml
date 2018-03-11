@@ -1,0 +1,28 @@
+﻿<Page
+    x:Class="App1.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App1"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <CaptureElement x:Name="captureElement"/>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom">
+            <StackPanel.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontSize" Value="18"/>
+                    <Setter Property="Margin" Value="5"/>
+                </Style>
+            </StackPanel.Resources>
+            <TextBlock Text="Category " HorizontalTextAlignment="Center"><Run Text="{x:Bind Category,Mode=OneWay}"/></TextBlock>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="Dacshund "><Run Text="{x:Bind Dacshund,Mode=OneWay}"/></TextBlock>
+                <TextBlock Text="Dog "><Run Text="{x:Bind Dog,Mode=OneWay}"/></TextBlock>
+                <TextBlock Text="Pony "><Run Text="{x:Bind Pony,Mode=OneWay}"/></TextBlock>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Page>
