@@ -1,29 +1,20 @@
-﻿//#define RESIZE
-namespace App1
+﻿namespace App1
 {
     using daschunds.model;
     using System;
-    using System.Diagnostics;
-    using System.IO;
+    using System.ComponentModel;
     using System.Linq;
-    using System.Runtime.InteropServices;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using Windows.Devices.Enumeration;
-    using Windows.Graphics.Imaging;
     using Windows.Media.Capture;
     using Windows.Media.Capture.Frames;
     using Windows.Media.Devices;
     using Windows.Storage;
-    using Windows.Storage.Streams;
+    using Windows.UI.Core;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Media.Imaging;
-    using Windows.Media;
-    using System.ComponentModel;
-    using System.Runtime.CompilerServices;
-    using Windows.UI.Core;
-    using System.Runtime.InteropServices.WindowsRuntime;
 
     public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
@@ -40,25 +31,21 @@ namespace App1
             get => this.dog;
             set => this.SetProperty(ref this.dog, value);
         }
-        string dog;
         public string Pony
         {
             get => this.pony;
             set => this.SetProperty(ref this.pony, value);
         }
-        string pony;
         public string Dacshund
         {
             get => this.daschund;
             set => this.SetProperty(ref this.daschund, value);
         }
-        string daschund;
         public string Category
         {
             get => this.category;
             set => this.SetProperty(ref this.category, value);
         }
-        string category;
         async Task LoadModelAsync()
         {
             var file = await StorageFile.GetFileFromApplicationUriAsync(
@@ -141,26 +128,16 @@ namespace App1
                             // From the description (both visible in Python and through the
                             // properties of the model that I can interrogate with code at
                             // runtime here) my image seems to to be 227 by 227 which is an 
-                            // odd size but I'm assuming that I should resize the frame here to 
-                            // suit that. I'm also assuming that what I'm doing here is 
-                            // expensive 
+                            // odd size but I'm assuming the underlying pieces do that work
+                            // for me.
+                            // If you've read the blog post, I took out the conditional
+                            // code which attempted to resize the frame as it seemed
+                            // unnecessary and confused the issue!
+                            this.inputData.data = videoFrame;
 
-#if RESIZE
-                            using (var resizedBitmap = await ResizeVideoFrame(videoFrame, IMAGE_SIZE, IMAGE_SIZE))
-                            using (var resizedFrame = VideoFrame.CreateWithSoftwareBitmap(resizedBitmap))
-                            {
-                                this.inputData.data = resizedFrame;
-#else       
-                                this.inputData.data = videoFrame;
-#endif // RESIZE
+                            var evalOutput = await this.learningModel.EvaluateAsync(this.inputData);
 
-                                var evalOutput = await this.learningModel.EvaluateAsync(this.inputData);
-
-                                await this.ProcessOutputAsync(evalOutput);
-
-#if RESIZE
-                            }
-#endif // RESIZE
+                            await this.ProcessOutputAsync(evalOutput);
                         }
                     }
                 }
@@ -197,66 +174,6 @@ namespace App1
                 }
             );
         }
-
-        /// <summary>
-        /// This is horrible - I am trying to resize a VideoFrame and I haven't yet
-        /// found a good way to do it so this function goes through a tonne of
-        /// stuff to try and resize it but it's not pleasant at all.
-        /// </summary>
-        /// <param name="frame"></param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <returns></returns>
-        async static Task<SoftwareBitmap> ResizeVideoFrame(VideoFrame frame, int width, int height)
-        {
-            SoftwareBitmap bitmapFromFrame = null;
-            bool ownsFrame = false;
-
-            if (frame.Direct3DSurface != null)
-            {
-                bitmapFromFrame = await SoftwareBitmap.CreateCopyFromSurfaceAsync(
-                    frame.Direct3DSurface,
-                    BitmapAlphaMode.Ignore);
-
-                ownsFrame = true;
-            }
-            else if (frame.SoftwareBitmap != null)
-            {
-                bitmapFromFrame = frame.SoftwareBitmap;
-            }
-
-            // We now need it in a pixel format that an encoder is happy with
-            var encoderBitmap = SoftwareBitmap.Convert(
-                bitmapFromFrame, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-
-            if (ownsFrame)
-            {
-                bitmapFromFrame.Dispose();
-            }
-
-            // We now need an encoder, should we keep creating it?
-            var memoryStream = new MemoryStream();
-
-            var encoder = await BitmapEncoder.CreateAsync(
-                BitmapEncoder.JpegEncoderId, memoryStream.AsRandomAccessStream());
-
-            encoder.SetSoftwareBitmap(encoderBitmap);
-            encoder.BitmapTransform.ScaledWidth = (uint)width;
-            encoder.BitmapTransform.ScaledHeight = (uint)height;
-
-            await encoder.FlushAsync();
-
-            var decoder = await BitmapDecoder.CreateAsync(memoryStream.AsRandomAccessStream());
-
-            var resizedBitmap = await decoder.GetSoftwareBitmapAsync(
-                BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-
-            memoryStream.Dispose();
-
-            encoderBitmap.Dispose();
-
-            return (resizedBitmap);
-        }
         void SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = null)
         {
             storage = value;
@@ -268,6 +185,9 @@ namespace App1
         MediaCapture mediaCapture;
         DacshundModel learningModel;
 
-        static readonly int IMAGE_SIZE = 227;
+        string category;
+        string daschund;
+        string dog;
+        string pony;
     }
 }
