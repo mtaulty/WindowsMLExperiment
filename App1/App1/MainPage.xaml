@@ -23,6 +23,8 @@
                 <TextBlock Text="Dog "><Run Text="{x:Bind Dog,Mode=OneWay}"/></TextBlock>
                 <TextBlock Text="Pony "><Run Text="{x:Bind Pony,Mode=OneWay}"/></TextBlock>
             </StackPanel>
+            <TextBlock Text="Avg Time ms " HorizontalTextAlignment="Center"><Run Text="{x:Bind Time,Mode=OneWay}"/></TextBlock>
+
         </StackPanel>
     </Grid>
 </Page>

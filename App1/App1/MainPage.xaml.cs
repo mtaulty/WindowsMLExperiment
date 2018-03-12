@@ -3,6 +3,7 @@
     using daschunds.model;
     using System;
     using System.ComponentModel;
+    using System.Diagnostics;
     using System.Linq;
     using System.Runtime.CompilerServices;
     using System.Threading;
@@ -25,6 +26,11 @@
             this.InitializeComponent();
             this.inputData = new DacshundModelInput();
             this.Loaded += OnLoaded;
+            this.timer = new Stopwatch();
+        }
+        public string Time
+        {
+            get => this.frameCount == 0 ? "n/a" : $"{(this.timer.ElapsedMilliseconds / this.frameCount):N0}";
         }
         public string Dog
         {
@@ -135,7 +141,10 @@
                             // unnecessary and confused the issue!
                             this.inputData.data = videoFrame;
 
+                            this.timer.Start();
                             var evalOutput = await this.learningModel.EvaluateAsync(this.inputData);
+                            this.timer.Stop();
+                            this.frameCount++;
 
                             await this.ProcessOutputAsync(evalOutput);
                         }
@@ -171,12 +180,17 @@
                     this.Pony = pony;
                     this.Dacshund = dacshund;
                     this.Category = category;
+                    this.FirePropertyChanged(nameof(this.Time));
                 }
             );
         }
         void SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = null)
         {
             storage = value;
+            this.FirePropertyChanged(propertyName);
+        }
+        void FirePropertyChanged(string propertyName)
+        {
             this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         DacshundModelInput inputData;
@@ -189,5 +203,7 @@
         string daschund;
         string dog;
         string pony;
+        Stopwatch timer;
+        int frameCount;
     }
 }
